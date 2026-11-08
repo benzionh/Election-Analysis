@@ -1,0 +1,329 @@
+---
+title: "Ol Kalou Constituency By-Election Results Analysis"
+author: "Benzion Murimi"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    fig_width: 7
+    fig_height: 5
+header-includes:
+  - \usepackage{booktabs}     # needed for booktabs=TRUE tables
+  - \usepackage{titling}      # lets us control the title block
+  - \pretitle{\begin{center}\LARGE\bfseries}
+  - \posttitle{\end{center}\vspace{0.5cm}}
+  - \preauthor{\begin{center}\large}
+  - \postauthor{\end{center}}
+  - \predate{\begin{center}\large}
+  - \postdate{\end{center}\vspace{2cm}}
+---
+
+```{r setup, include=FALSE}
+# Global options: hide code, suppress warnings, centre all figures
+knitr::opts_chunk$set(
+  echo      = FALSE,
+  warning   = FALSE,
+  message   = FALSE,
+  fig.align = "center"
+)
+
+# Packages
+# tidyverse - data wrangling and ggplot2 charts
+# scales    - formats numbers with commas and % on axes
+# knitr + kableExtra - for PDF-friendly tables (same as KCSE / Embu reports)
+library(tidyverse)
+library(scales)
+library(knitr)
+library(kableExtra)
+```
+
+```{r load-results-data, include=FALSE}
+# Results are built here (hidden) so summary statistics are available for the
+# Executive Summary below. The same code is shown, for transparency, in the
+# "Data Entry" section under Data and Methodology further down.
+candidates <- data.frame(
+  Candidate = c("Abdifatah Hussein Abdullahi", "Timothy Kamau Kasuku",
+                "Wilson Mwaniki Kigwa", "Edwin Kariri Muchiri",
+                "Edward Mathenge Mwaniki", "Rachael Wangui Njoroge",
+                "Samuel Muchina Nyagah", "Stephen Wanyoike Waithaka",
+                "Sammy Douglas Kamau Waweru"),
+  Party     = c("PPS", "PM", "Jubilee", "PNU", "KMA", "PDP",
+                "UDA", "NLP", "DCP"),
+  Votes     = c(19, 51, 198, 28, 16, 11, 5450, 103, 35440)
+)
+
+candidates$Share_Pct <- round(candidates$Votes / sum(candidates$Votes) * 100, 1)
+candidates <- candidates[order(-candidates$Votes), ]
+
+registered_voters <- 73480
+total_turnout     <- 41656
+valid_votes        <- sum(candidates$Votes)
+rejected_ballots  <- 340
+
+turnout_pct  <- round(total_turnout / registered_voters * 100, 1)
+rejected_pct <- round(rejected_ballots / total_turnout * 100, 1)
+
+winner    <- candidates[1, ]
+runner_up <- candidates[2, ]
+
+margin_votes <- winner$Votes - runner_up$Votes
+margin_pct   <- round(margin_votes / valid_votes * 100, 1)
+```
+
+\newpage
+
+# Executive Summary
+
+This report analyses the results of the Ol Kalou Constituency by-election for
+Member of National Assembly, as declared on **Form 35B** by the IEBC
+Constituency Returning Officer. Nine candidates contested the seat.
+
+**Key figures at a glance:** **`r winner$Candidate`** (`r winner$Party`) won
+the seat with **`r comma(winner$Votes)`** votes (**`r winner$Share_Pct`%** of
+valid votes cast), ahead of **`r runner_up$Candidate`** (`r runner_up$Party`)
+on `r comma(runner_up$Votes)` votes — a margin of **`r comma(margin_votes)`
+votes (`r margin_pct` percentage points)**. Of `r comma(registered_voters)`
+registered voters, `r comma(total_turnout)` turned out to vote
+(**`r turnout_pct`%** turnout), of which `r comma(rejected_ballots)` ballots
+(`r rejected_pct`%) were rejected.
+
+\newpage
+
+# Data and Methodology
+
+## Data Entry
+
+Figures below are the constituency-level aggregate results as declared on
+Form 35B. The code is shown here for transparency; it was already run
+earlier (see the hidden `load-results-data` chunk) so that summary statistics
+could feed into the Executive Summary above.
+
+```{r data-listing, echo=TRUE, eval=FALSE}
+candidates <- data.frame(
+  Candidate = c("Abdifatah Hussein Abdullahi", "Timothy Kamau Kasuku",
+                "Wilson Mwaniki Kigwa", "Edwin Kariri Muchiri",
+                "Edward Mathenge Mwaniki", "Rachael Wangui Njoroge",
+                "Samuel Muchina Nyagah", "Stephen Wanyoike Waithaka",
+                "Sammy Douglas Kamau Waweru"),
+  Party     = c("PPS", "PM", "Jubilee", "PNU", "KMA", "PDP",
+                "UDA", "NLP", "DCP"),
+  Votes     = c(19, 51, 198, 28, 16, 11, 5450, 103, 35440)
+)
+
+# Vote share per candidate, sorted from largest to smallest
+candidates$Share_Pct <- round(candidates$Votes / sum(candidates$Votes) * 100, 1)
+candidates <- candidates[order(-candidates$Votes), ]
+
+# Turnout figures, as declared on the form
+registered_voters <- 73480
+total_turnout     <- 41656
+valid_votes       <- sum(candidates$Votes)  # cross-checked against the form
+rejected_ballots  <- 340
+```
+
+## Methodology
+
+Results were compiled from the Form 35B declaration for Ol Kalou Constituency
+(Code 091). Analysis was conducted in R to compute:
+
+- Candidate vote share (% of valid votes)
+- Margin of victory between the top two candidates
+- Voter turnout (% of registered voters)
+- Rejected ballots (% of total votes cast)
+
+### Limitations
+
+- This report uses **constituency-level aggregate results only** (the
+  candidate totals and voter turnout figures printed on Form 35B). The
+  scanned copy of the form carries a security watermark that makes the
+  underlying **polling-station-level** breakdown (140+ stations) unreliable
+  to extract by OCR; those figures were not used here to avoid introducing
+  transcription errors.
+- All aggregate figures were cross-checked for internal consistency
+  (candidate votes sum to the stated valid votes total; valid votes plus
+  rejected ballots equal the stated turnout figure) before use.
+- The report covers a single constituency by-election and does not draw
+  conclusions about wider county- or national-level trends.
+
+\newpage
+
+# Results Analysis
+
+## Candidate Vote Share
+
+```{r candidate-table}
+candidates[, c("Candidate", "Party", "Votes", "Share_Pct")] |>
+  kable(
+    booktabs    = TRUE,
+    caption     = "Ol Kalou By-Election Results by Candidate",
+    format.args = list(big.mark = ","),
+    col.names   = c("Candidate", "Party", "Votes", "Share (%)"),
+    align       = "llrr",
+    row.names   = FALSE
+  ) |>
+  kable_styling(latex_options = "hold_position") |>
+  column_spec(1, bold = TRUE) |>
+  row_spec(1, background = "#eafaf1")
+```
+
+```{r candidate-bar, fig.cap="Candidate Vote Share — Ol Kalou By-Election", fig.height=4.5}
+# Horizontal bar chart, ordered by votes, with % share labelled at bar end
+ggplot(candidates, aes(x = reorder(Candidate, Votes), y = Votes, fill = Party)) +
+  geom_col(width = 0.7, show.legend = FALSE) +
+  geom_text(aes(label = paste0(Share_Pct, "%")), hjust = -0.15, size = 3.2) +
+  coord_flip() +
+  scale_y_continuous(labels = comma, expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title   = "Candidate Vote Share — Ol Kalou By-Election",
+    x       = "",
+    y       = "Votes",
+    caption = "Source: IEBC Form 35B, Ol Kalou Constituency (Code 091)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title         = element_text(face = "bold"),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+### Observation
+
+The contest was effectively a two-way race: `r winner$Candidate`
+(`r winner$Party`) and `r runner_up$Candidate` (`r runner_up$Party`) together
+took **`r round(winner$Share_Pct + runner_up$Share_Pct, 1)`%** of all valid
+votes, while the remaining seven candidates shared just
+**`r round(100 - winner$Share_Pct - runner_up$Share_Pct, 1)`%** between them.
+
+## Margin of Victory
+
+```{r margin-table}
+margin_table <- data.frame(
+  Metric = c("Winner", "Runner-up", "Margin (votes)", "Margin (% of valid votes)"),
+  Value  = c(
+    paste0(winner$Candidate, " (", winner$Party, ") — ", comma(winner$Votes)),
+    paste0(runner_up$Candidate, " (", runner_up$Party, ") — ", comma(runner_up$Votes)),
+    comma(margin_votes),
+    paste0(margin_pct, "%")
+  )
+)
+
+kable(
+  margin_table,
+  booktabs  = TRUE,
+  caption   = "Margin of Victory",
+  col.names = c("Metric", "Value"),
+  align     = "ll"
+) |>
+  kable_styling(latex_options = "hold_position") |>
+  column_spec(1, bold = TRUE)
+```
+
+## Voter Turnout and Rejected Ballots
+
+```{r turnout-table}
+turnout_table <- data.frame(
+  Metric = c("Registered Voters", "Total Turnout", "Valid Votes",
+             "Rejected Ballots", "Turnout (%)", "Rejected Ballots (% of turnout)"),
+  Value  = c(
+    comma(registered_voters),
+    comma(total_turnout),
+    comma(valid_votes),
+    comma(rejected_ballots),
+    paste0(turnout_pct, "%"),
+    paste0(rejected_pct, "%")
+  )
+)
+
+kable(
+  turnout_table,
+  booktabs  = TRUE,
+  caption   = "Voter Turnout Summary",
+  col.names = c("Metric", "Value"),
+  align     = "lr"
+) |>
+  kable_styling(latex_options = "hold_position") |>
+  column_spec(1, bold = TRUE)
+```
+
+```{r turnout-chart, fig.cap="Votes Cast: Valid vs. Rejected", fig.height=2.5}
+# Single stacked bar showing valid vs. rejected as parts of total votes cast
+cast_long <- data.frame(
+  Category = "Votes Cast",
+  Type     = c("Valid", "Rejected"),
+  Count    = c(valid_votes, rejected_ballots)
+)
+cast_long$Type <- factor(cast_long$Type, levels = c("Rejected", "Valid"))
+
+ggplot(cast_long, aes(x = Category, y = Count, fill = Type)) +
+  geom_col(width = 0.5) +
+  coord_flip() +
+  scale_y_continuous(labels = comma) +
+  scale_fill_manual(values = c("Valid" = "#27ae60", "Rejected" = "#c0392b"), name = "") +
+  labs(x = "", y = "Votes", caption = "Source: IEBC Form 35B, Ol Kalou Constituency (Code 091)") +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position  = "bottom",
+    axis.text.y      = element_blank(),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+### Observation
+
+Turnout stood at `r turnout_pct`% of registered voters — typical for a
+by-election, where turnout is usually lower than in general elections.
+Rejected ballots were a small share of votes cast (`r rejected_pct`%),
+suggesting no major spoilage issue at the constituency level.
+
+\newpage
+
+# Conclusions and Recommendations
+
+## Conclusions
+
+1. **Decisive Win** — `r winner$Candidate` (`r winner$Party`) won the seat
+   with `r winner$Share_Pct`% of valid votes, a margin of
+   `r comma(margin_votes)` votes over the runner-up.
+
+2. **Two-Party Dominance** — The top two candidates captured
+   `r round(winner$Share_Pct + runner_up$Share_Pct, 1)`% of valid votes
+   between them, leaving little room for the other seven candidates.
+
+3. **Moderate Turnout** — At `r turnout_pct`%, turnout was moderate,
+   consistent with typical by-election patterns where general disengagement
+   or a widely-anticipated result can depress participation.
+
+4. **Low Ballot Rejection** — Rejected ballots made up only `r rejected_pct`%
+   of votes cast, indicating voters largely understood how to cast a valid
+   vote.
+
+## Recommendations
+
+- **Verify polling-station-level data separately** — If station-level
+  analysis (e.g. identifying low-turnout polling stations for future voter
+  education) is required for this assignment, obtain a clean-text source
+  (e.g. the IEBC results portal or a verified transcription) rather than
+  relying on OCR of the watermarked scan.
+
+- **Investigate turnout drivers** — Future work could compare this
+  by-election's turnout against the constituency's turnout in the last
+  general election to assess whether the drop (if any) is typical for
+  by-elections.
+
+- **Monitor competitiveness trends** — With such a wide margin, future
+  reports could track whether the dominant party's vote share is stable or
+  shrinking across successive elections in this constituency.
+
+\newpage
+
+# Appendix: Session Information
+
+The R and package versions below are recorded for reproducibility. This
+section can be removed before sharing the report externally if a shorter
+document is preferred.
+
+```{r session-info}
+sessionInfo()
+```
